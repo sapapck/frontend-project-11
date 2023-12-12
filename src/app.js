@@ -1,41 +1,117 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable padded-blocks */
+/* eslint-disable no-trailing-spaces */
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-undef */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable import/no-extraneous-dependencies */
 import * as yup from 'yup';
-import watcher from './view.js';
+import i18next from 'i18next';
+import axios from 'axios';
+import watch from './view.js';
+import resources from './locales/index.js';
 
-const validateUrl = (url, watchetState) => {
-  const schema = yup.string().required().url().notOneOf(url);
-  return schema.validate(url)
-    .then(() => {
-      watchetState.form.url = true;
-    })
-    .catch((err) => {
-      watchetState.errors = true;
-      console.log(err);
-    });
+const httpResponse = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
+
+const rssParser = (rssData) => {
+  const parser = new DOMParser();
+  const parsedData = parser.parseFromString(rssData, 'application/xml');
+  return parsedData;
+};
+
+const generateId = (state) => {
+  const feeds = state.listOfFeeds;
+  let count = 0;
+  feeds.forEach((feed) => {
+    count += 1;
+    feed.id = count;
+  });
+  return feeds;
+};
+
+const exState = {
+  listOfFeeds: [
+    { name: '1' }, 
+    { name: '2' }, 
+    { name: '3' },
+    { name: '4' },
+  ],
 };
 
 const app = () => {
+
   const elements = {
-    form: document.querySelector('.rss-form'),
-    input: document.querySelector('#url-input'),
-    texbox: document.querySelector('.text-danger'),
+    form: document.querySelector('form'),
+    input: document.querySelector('input'),
+    feedback: document.querySelector('.feedback'),
+    posts: document.querySelector('.posts'),
+    feeds: document.querySelector('.feeds'),
   };
-
+  
   const state = {
-    form: {
-      url: null,
+    processState: 'filling',
+    data: '',
+    validation: {
+      state: 'valid',
+      error: '',
     },
-    errors: null,
+    listOfPosts: [],
+    listOfFeeds: [],
   };
 
-  const watchetState = watcher(state, elements);
-  elements.form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const url = formData.get('url');
-    validateUrl(url, watchetState);
-  });
+  const i18nI = i18next.createInstance();
+  i18nI.init({
+    lng: 'ru',
+    debug: false,
+    resources,
+  })
+    .then(() => {
+      yup.setLocale({
+        mixed: {
+          notOneOf: 'errors.alreadyExists',
+          default: 'the entered data is not valid',
+        },
+        string: {
+          url: 'errors.invalidUrl',
+        },
+      });
+
+      const watchedState = watch(state, elements, i18nI);
+
+      elements.form.addEventListener('input', (e) => {
+        e.preventDefault();
+        watchedState.data = e.target.value;
+      });
+
+      elements.form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const schema = yup.string().url().notOneOf(state.listOfFeeds).trim();
+        schema.validate(state.data)
+          .then((validUrl) => httpResponse(validUrl))
+
+          .then((response) => {
+
+            watchedState.validation.state = 'valid';
+            watchedState.processState = 'sending';
+
+            const parsedData = rssParser(response.data.contents).querySelector('channel');
+            const titleFeed = parsedData.querySelector('title');
+            const descriptionFeed = parsedData.querySelector('description');
+            watchedState.listOfFeeds.push(state.data, titleFeed, descriptionFeed);
+            console.log(state.listOfFeeds);
+            watchedState.processState = 'finished';
+          })
+          .catch((err) => {
+            watchedState.validation.state = 'invalid';
+            watchedState.validation.error = err.message;
+            watchedState.processState = 'failed';
+          })
+          .finally(() => {
+            watchedState.processState = 'filling';
+          });
+      });
+    });
 };
 export default app;
