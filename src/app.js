@@ -9,16 +9,11 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
-import watch from './view.js';
+import onChange from 'on-change';
+import render from './view.js';
 import resources from './locales/index.js';
 
 const httpResponse = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
-
-const rssParser = (rssData) => {
-  const parser = new DOMParser();
-  const parsedData = parser.parseFromString(rssData, 'application/xml');
-  return parsedData;
-};
 
 const generateId = (state) => {
   const feeds = state.listOfFeeds;
@@ -28,15 +23,6 @@ const generateId = (state) => {
     feed.id = count;
   });
   return feeds;
-};
-
-const exState = {
-  listOfFeeds: [
-    { name: '1' }, 
-    { name: '2' }, 
-    { name: '3' },
-    { name: '4' },
-  ],
 };
 
 const app = () => {
@@ -77,7 +63,7 @@ const app = () => {
         },
       });
 
-      const watchedState = watch(state, elements, i18nI);
+      const watchedState = onChange(state, render(state, elements, i18nI));
 
       elements.form.addEventListener('input', (e) => {
         e.preventDefault();
@@ -89,17 +75,10 @@ const app = () => {
 
         const schema = yup.string().url().notOneOf(state.listOfFeeds).trim();
         schema.validate(state.data)
-          .then((validUrl) => httpResponse(validUrl))
-
-          .then((response) => {
-
+          .then(() => {
             watchedState.validation.state = 'valid';
             watchedState.processState = 'sending';
-
-            const parsedData = rssParser(response.data.contents).querySelector('channel');
-            const titleFeed = parsedData.querySelector('title');
-            const descriptionFeed = parsedData.querySelector('description');
-            watchedState.listOfFeeds.push(state.data, titleFeed, descriptionFeed);
+            watchedState.listOfFeeds.push(state.data);
             console.log(state.listOfFeeds);
             watchedState.processState = 'finished';
           })
