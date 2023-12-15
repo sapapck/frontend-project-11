@@ -12,19 +12,29 @@ import axios from 'axios';
 import onChange from 'on-change';
 import render from './view.js';
 import resources from './locales/index.js';
+import rssParser from './parser.js';
 
 const httpResponse = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
 
-const generateId = (state) => {
-  const feeds = state.listOfFeeds;
+const generateId = () => {
   let count = 0;
-  feeds.forEach((feed) => {
-    count += 1;
-    feed.id = count;
-  });
-  return feeds;
+  count += 1;
+  return count;
 };
 
+const addFeeds = (id, title, description, watchedState) => {
+  watchedState.listOfFeeds.push({ id, title, description });
+};
+
+const addPosts = (postId, posts, watchedState) => {
+  const result = posts.map((post) => ({
+    postId,
+    title: post.title,
+    description: post.description,
+    link: post.link,
+  }));
+  watchedState.listOfPosts = result.concat(watchedState.listOfPosts);
+};
 const app = () => {
 
   const elements = {
@@ -75,11 +85,19 @@ const app = () => {
 
         const schema = yup.string().url().notOneOf(state.listOfFeeds).trim();
         schema.validate(state.data)
-          .then(() => {
+          .then((validUrl) => httpResponse(validUrl))
+          .then((rssData) => rssParser(rssData.data.contents))
+          .then((parsedRSS) => {
+            const feedId = generateId();
+            const feedTitle = parsedRSS.feed.channelTitle;
+            const feedDescription = parsedRSS.feed.channelDescription;
+            const { posts } = parsedRSS;
+            addFeeds(feedId, feedTitle, feedDescription, watchedState);
+            addPosts(feedId, posts, watchedState);
+
             watchedState.validation.state = 'valid';
             watchedState.processState = 'sending';
             watchedState.listOfFeeds.push(state.data);
-            console.log(state.listOfFeeds);
             watchedState.processState = 'finished';
           })
           .catch((err) => {
