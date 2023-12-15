@@ -17,8 +17,6 @@ import rssParser from './parser.js';
 
 const httpResponse = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
 
-const generateId = _.uniqueId();
-
 const addFeeds = (id, title, description, watchedState) => {
   watchedState.listOfFeeds.push({ id, title, description });
 };
@@ -85,7 +83,7 @@ const app = () => {
           .then((validUrl) => httpResponse(validUrl))
           .then((rssData) => rssParser(rssData.data.contents))
           .then((parsedRSS) => {
-            const feedId = generateId();
+            const feedId = _.uniqueId();
             const feedTitle = parsedRSS.feed.channelTitle;
             const feedDescription = parsedRSS.feed.channelDescription;
             const { posts } = parsedRSS;
