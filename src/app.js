@@ -10,17 +10,14 @@ import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
 import onChange from 'on-change';
+import _ from 'lodash';
 import render from './view.js';
 import resources from './locales/index.js';
 import rssParser from './parser.js';
 
 const httpResponse = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
 
-const generateId = () => {
-  let count = 0;
-  count += 1;
-  return count;
-};
+const generateId = _.uniqueId();
 
 const addFeeds = (id, title, description, watchedState) => {
   watchedState.listOfFeeds.push({ id, title, description });
