@@ -16,8 +16,6 @@ const makeContainer = (name, state, elements, i18n) => {
   elements[name].append(card);
   const listGroup = document.createElement('ul');
   listGroup.classList.add('list-group', 'border-0', 'rounded-0');
-  console.log(state.listOfFeeds);
-  console.log(state.listOfposts);
   if (name === 'feeds') {
     state.listOfFeeds.forEach((feed) => {
       const { title, description } = feed;
