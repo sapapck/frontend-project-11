@@ -5,5 +5,7 @@ export default {
       invalidUrl: 'Ссылка должна быть валидным URL',
       alreadyExists: 'RSS уже существует',
     },
+    feeds: 'Фиды',
+    posts: 'Посты',
   },
 };
