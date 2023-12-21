@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-extraneous-dependencies */
@@ -36,13 +37,15 @@ const makeContainer = (name, state, elements, i18n) => {
   }
   if (name === 'posts') {
     state.listOfPosts.forEach((post) => {
-      const { postId, title, link } = post;
+      const {
+ id, title, link, description,
+} = post;
       const listGroupItem = document.createElement('li');
       listGroupItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
 
       const a = document.createElement('a');
       a.classList.add('fw-bold');
-      a.setAttribute('data-id', postId);
+      a.setAttribute('data-id', id);
       a.setAttribute('target', '_blank');
       a.setAttribute('rel', 'noopener noreferrer');
       a.setAttribute('href', link);
@@ -51,16 +54,30 @@ const makeContainer = (name, state, elements, i18n) => {
       const button = document.createElement('button');
       button.setAttribute('type', 'button');
       button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
-      button.setAttribute('data-id', postId);
+      button.setAttribute('data-id', id);
       button.setAttribute('data-bs-Toggle', 'modal');
       button.setAttribute('data-bs-Target', '#modal');
       button.textContent = 'Просмотр';
+
+      elements.modalHeader.textContent = title;
+      elements.modalBody.textContent = description;
+      elements.modalFooter.setAttribute('href', link);
 
       listGroupItem.append(a, button);
       listGroup.append(listGroupItem);
     });
     card.append(listGroup);
   }
+};
+
+const modalContent = (elements, posts) => {
+  posts.forEach((post) => {
+    const { title, link, description } = post;
+
+    elements.modalHeader.textContent = title;
+      elements.modalBody.textContent = description;
+      elements.modalFooter.setAttribute('href', link);
+  });
 };
 
 const errorHandler = (elements, error, i18n) => {
