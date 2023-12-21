@@ -1,3 +1,4 @@
+/* eslint-disable no-shadow */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable padded-blocks */
 /* eslint-disable no-trailing-spaces */
@@ -11,28 +12,44 @@ import i18next from 'i18next';
 import axios from 'axios';
 import onChange from 'on-change';
 import _ from 'lodash';
-import render from './view.js';
+import render from './render.js';
 import resources from './locales/index.js';
 import rssParser from './parser.js';
 
-const httpResponse = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
+const httpRequest = (url) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
 
-const addFeeds = (id, title, description, watchedState) => {
-  watchedState.listOfFeeds.push({ id, title, description });
+const addFeeds = (feedId, title, description, watchedState) => {
+  watchedState.listOfFeeds.push({ feedId, title, description });
 };
 
-const addPosts = (postId, posts, watchedState) => {
+const addPosts = (posts, watchedState) => {
   const result = posts.map((post) => ({
-    postId,
+    id: _.uniqueId(),
     title: post.title,
     description: post.description,
     link: post.link,
   }));
   watchedState.listOfPosts = result.concat(watchedState.listOfPosts);
 };
+const updatePosts = (state) => {
+  const addedPosts = state.listOfPosts.map((post) => post.link);
+  httpRequest(state.data)
+    .then((response) => rssParser(response.data.contents))
+    .then((parsedRss) => {
+      const { posts } = parsedRss;
+      const newPosts = posts.map((post) => post.link);
+      if (!addedPosts.includes(newPosts)) {
+        addPosts(newPosts, state);
+      }
+    });     
+
+};
 const app = () => {
 
   const elements = {
+    modalHeader: document.querySelector('.modal-title'),
+    modalBody: document.querySelector('.modal-body'),
+    modalFooter: document.querySelector('.full-article'),
     form: document.querySelector('form'),
     input: document.querySelector('input'),
     feedback: document.querySelector('.feedback'),
@@ -49,6 +66,7 @@ const app = () => {
     },
     listOfPosts: [],
     listOfFeeds: [],
+    clickedPost: [],
   };
 
   const i18nI = i18next.createInstance();
@@ -80,15 +98,24 @@ const app = () => {
 
         const schema = yup.string().url().notOneOf(state.listOfFeeds).trim();
         schema.validate(state.data)
-          .then((validUrl) => httpResponse(validUrl))
-          .then((rssData) => rssParser(rssData.data.contents))
+          .then((validUrl) => { 
+            const req = httpRequest(validUrl);
+            console.log();
+            return req;
+          })
+          .then((rssData) => {
+            const par = rssParser(rssData.data.contents); 
+            return par;
+          })
           .then((parsedRSS) => {
             const feedId = _.uniqueId();
             const feedTitle = parsedRSS.feed.channelTitle;
             const feedDescription = parsedRSS.feed.channelDescription;
+
             const { posts } = parsedRSS;
+
             addFeeds(feedId, feedTitle, feedDescription, watchedState);
-            addPosts(feedId, posts, watchedState);
+            addPosts(posts, watchedState);
 
             watchedState.validation.state = 'valid';
             watchedState.processState = 'sending';
