@@ -3,9 +3,9 @@ const rssParser = (rssData) => {
   const xmlDocument = parser.parseFromString(rssData, 'application/xml');
 
   const channel = xmlDocument.querySelector('channel');
-  const channelTitle = xmlDocument.querySelector('channel title').textContent;
-  const channelDescription = xmlDocument.querySelector('channel description').textContent;
-  const feed = { channelTitle, channelDescription };
+  const feedTitle = xmlDocument.querySelector('channel title').textContent;
+  const feedDescription = xmlDocument.querySelector('channel description').textContent;
+  const feed = { feedTitle, feedDescription };
 
   const itemElements = channel.getElementsByTagName('item');
   const posts = [...itemElements].map((item) => {
