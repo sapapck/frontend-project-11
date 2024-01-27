@@ -18,17 +18,17 @@ const makeContainer = (name, state, elements, i18n) => {
   const listGroup = document.createElement('ul');
   listGroup.classList.add('list-group', 'border-0', 'rounded-0');
   if (name === 'feeds') {
-    state.listOfFeeds.forEach((feed) => {
-      const { title, description } = feed;
+    state.content.feeds.forEach((feed) => {
+      const { feedTitle, feedDescription } = feed;
 
       const listGroupItem = document.createElement('li');
       listGroupItem.classList.add('list-group-item', 'border-0', 'border-end-0');
       const h3 = document.createElement('h3');
       h3.classList.add('h6', 'm-0');
-      h3.textContent = title;
+      h3.textContent = feedTitle;
       const p = document.createElement('p');
       p.classList.add('m-0', 'small', 'text-black-50');
-      p.textContent = description;
+      p.textContent = feedDescription;
 
       listGroupItem.append(h3, p);
       listGroup.prepend(listGroupItem);
@@ -36,10 +36,8 @@ const makeContainer = (name, state, elements, i18n) => {
     card.append(listGroup);
   }
   if (name === 'posts') {
-    state.listOfPosts.forEach((post) => {
-      const {
- id, title, link, description,
-} = post;
+    state.content.posts.forEach((post) => {
+      const { id, title, link } = post;
       const listGroupItem = document.createElement('li');
       listGroupItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
 
@@ -59,10 +57,6 @@ const makeContainer = (name, state, elements, i18n) => {
       button.setAttribute('data-bs-Target', '#modal');
       button.textContent = 'Просмотр';
 
-      elements.modalHeader.textContent = title;
-      elements.modalBody.textContent = description;
-      elements.modalFooter.setAttribute('href', link);
-
       listGroupItem.append(a, button);
       listGroup.append(listGroupItem);
     });
@@ -71,19 +65,28 @@ const makeContainer = (name, state, elements, i18n) => {
 };
 
 const modalContent = (elements, posts) => {
-  posts.forEach((post) => {
-    const { title, link, description } = post;
+    posts.forEach((post) => {
+    const {
+ title, link, description, id,
+} = post;
 
     elements.modalHeader.textContent = title;
       elements.modalBody.textContent = description;
       elements.modalFooter.setAttribute('href', link);
+
+      const visitedLink = document.querySelector(`a[data-id="${id}"]`);
+      visitedLink.classList.remove('fw-bold');
+      visitedLink.classList.add('fw-normal', 'link-secondary');
   });
 };
-
 const errorHandler = (elements, error, i18n) => {
   elements.input.classList.add('is-invalid');
   elements.feedback.classList.add('text-danger');
-  elements.feedback.textContent = i18n.t(error);
+  if (error === 'Network Error') {
+  elements.feedback.textContent = i18n.t('errors.networkError');
+  } else {
+    elements.feedback.textContent = i18n.t(error);
+  }
 };
 
 const finishHandler = (elements, i18n) => {
@@ -105,11 +108,14 @@ const render = (state, elements, i18n) => (path, value) => {
         finishHandler(elements, i18n);
       }
       break;
-    case 'listOfFeeds':
+    case 'content.feeds':
       makeContainer('feeds', state, elements, i18n);
       break;
-    case 'listOfPosts':
+    case 'content.posts':
       makeContainer('posts', state, elements, i18n);
+      break;
+      case 'uiState.PreviewedPosts':
+      modalContent(elements, value);
       break;
     default:
       break;
