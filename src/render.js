@@ -82,10 +82,14 @@ const modalContent = (elements, posts) => {
 const errorHandler = (elements, error, i18n) => {
   elements.input.classList.add('is-invalid');
   elements.feedback.classList.add('text-danger');
-  if (error === 'Network Error') {
+  elements.input.removeAttribute('disabled');
+  elements.button.removeAttribute('disabled');
+  if (error.name === 'TypeError') {
+    elements.feedback.textContent = i18n.t('errors.invalidRss');
+  } else if (error.message === 'Network Error') {
   elements.feedback.textContent = i18n.t('errors.networkError');
   } else {
-    elements.feedback.textContent = i18n.t(error);
+  elements.feedback.textContent = i18n.t(error.message);
   }
 };
 
@@ -104,8 +108,14 @@ const render = (state, elements, i18n) => (path, value) => {
       if (value === 'failed') {
         errorHandler(elements, state.validation.error, i18n);
       }
+      if (value === 'sending') {
+        elements.input.setAttribute('disabled', true);
+        elements.button.setAttribute('disabled', true);
+      }
       if (value === 'finished') {
         finishHandler(elements, i18n);
+        elements.input.removeAttribute('disabled');
+        elements.button.removeAttribute('disabled');
       }
       break;
     case 'content.feeds':
