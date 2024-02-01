@@ -30,6 +30,7 @@ const app = () => {
     feedback: document.querySelector('.feedback'),
     posts: document.querySelector('.posts'),
     feeds: document.querySelector('.feeds'),
+    button: document.querySelector('button[type="submit"]'),
   };
   
   const state = {
@@ -37,7 +38,7 @@ const app = () => {
     data: '',
 
     uiState: {
-      PreviewedPosts: [],
+      PreviewedPosts: new Set(),
     },
     validation: {
       state: 'valid',
@@ -107,6 +108,7 @@ const app = () => {
 
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
+        watchedState.processState = 'sending';
         const url = state.content.feeds.map((feed) => feed.link);
         const schema = yup.string().url().notOneOf(url).trim();
         schema.validate(state.data)
@@ -116,21 +118,19 @@ const app = () => {
           .then((rssData) => rssParser(rssData.data.contents))
 
           .then((parsedRSS) => {
+            watchedState.validation.state = 'valid';
+
             const feedId = uniqueId();
             const { posts, feed } = parsedRSS;
-            
             createPosts(watchedState, posts, feedId);
-            
-            watchedState.validation.state = 'valid';
-            watchedState.processState = 'sending';
             watchedState.content.feeds.push({ ...feed, feedId, link: state.data });
             watchedState.processState = 'finished';
             getNewPosts(watchedState);
           })
           .catch((err) => {
-            
             watchedState.validation.state = 'invalid';
-            watchedState.validation.error = err.message;
+            
+            watchedState.validation.error = err;
             watchedState.processState = 'failed';
           })
           .finally(() => {
@@ -138,12 +138,14 @@ const app = () => {
           });
       });
 
-      elements.modal.addEventListener('show.bs.modal', (e) => {
-        const buttonId = e.relatedTarget;
-        const recipientId = buttonId.getAttribute('data-id');
-        const selectPost = watchedState.content.posts.find((post) => post.id === recipientId);
-        watchedState.uiState.PreviewedPosts.push(selectPost);
-        
+      elements.posts.addEventListener('click', (e) => {
+        const idPost = e.target.dataset.id;
+        if (idPost) {
+          const selectPost = watchedState.content.posts.find((post) => post.id === idPost);
+          if (selectPost) {
+            watchedState.uiState.PreviewedPosts.add(selectPost);
+          }
+        }
       });
       
     });
