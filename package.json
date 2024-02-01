@@ -1,7 +1,7 @@
 {
   "name": "@hexlet/code",
   "version": "1.0.0",
-  "description": "[![Actions Status](https://github.com/sapapck/frontend-project-11/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/sapapck/frontend-project-11/actions)",
+  "description": "RSS agregator",
   "main": "index.js",
   "scripts": {},
   "author": "",
@@ -9,7 +9,6 @@
   "devDependencies": {
     "@babel/core": "^7.23.2",
     "@babel/preset-env": "^7.23.2",
-    "@playwright/test": "^1.41.1",
     "@types/node": "^20.11.6",
     "@webpack-cli/generators": "^3.0.7",
     "babel-loader": "^9.1.3",
